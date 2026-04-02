@@ -1,0 +1,38 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: image-classifier
+  namespace: ml-serving
+spec:
+  predictors:
+    - name: default
+      replicas: 2
+      graph:
+        name: classifier
+        implementation: SKLEARN_SERVER
+        modelUri: "gs://models/image-classifier/v1"
+        children: []
+        parameters:
+          - name: model_type
+            type: STRING
+            value: "image"
+      componentSpecs:
+        - spec:
+            containers:
+              - name: classifier
+                image: registry.example.com/model-serving/predictor:latest
+                resources:
+                  requests:
+                    cpu: "500m"
+                    memory: "1Gi"
+                  limits:
+                    cpu: "2"
+                    memory: "4Gi"
+                ports:
+                  - containerPort: 9000
+                    protocol: TCP
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+                  - name: PYTORCH_DEVICE
+                    value: "cpu"

@@ -1,0 +1,60 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: image-pipeline
+  namespace: ml-serving
+spec:
+  predictors:
+    - name: default
+      replicas: 2
+      graph:
+        name: preprocessor
+        type: TRANSFORMER
+        children:
+          - name: classifier
+            type: MODEL
+            children:
+              - name: postprocessor
+                type: TRANSFORMER
+                children: []
+      componentSpecs:
+        - spec:
+            containers:
+              - name: preprocessor
+                image: registry.example.com/model-serving/transformer:latest
+                resources:
+                  requests:
+                    cpu: "250m"
+                    memory: "512Mi"
+                env:
+                  - name: MODEL_NAME
+                    value: "ImageTransformer"
+                  - name: SERVICE_TYPE
+                    value: "TRANSFORMER"
+        - spec:
+            containers:
+              - name: classifier
+                image: registry.example.com/model-serving/predictor:latest
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "2Gi"
+                  limits:
+                    cpu: "2"
+                    memory: "4Gi"
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+        - spec:
+            containers:
+              - name: postprocessor
+                image: registry.example.com/model-serving/transformer:latest
+                resources:
+                  requests:
+                    cpu: "250m"
+                    memory: "512Mi"
+                env:
+                  - name: MODEL_NAME
+                    value: "ImageTransformer"
+                  - name: SERVICE_TYPE
+                    value: "OUTPUT_TRANSFORMER"

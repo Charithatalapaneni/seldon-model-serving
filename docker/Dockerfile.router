@@ -1,0 +1,16 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY serving/router.py serving/router.py
+COPY serving/__init__.py serving/__init__.py
+
+RUN useradd -m appuser
+USER appuser
+
+ENV MODEL_NAME=EnsembleRouter
+ENV SERVICE_TYPE=ROUTER
+
+CMD ["python", "-c", "from serving.router import EnsembleRouter; print('Router ready')"]

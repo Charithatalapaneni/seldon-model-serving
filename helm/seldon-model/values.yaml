@@ -1,0 +1,60 @@
+# model config
+model:
+  name: image-classifier
+  type: image
+  version: v1
+
+# container image
+image:
+  repository: registry.example.com/model-serving/predictor
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# deployment
+replicas: 2
+namespace: ml-serving
+
+resources:
+  requests:
+    cpu: "500m"
+    memory: "1Gi"
+  limits:
+    cpu: "2"
+    memory: "4Gi"
+
+# canary deployment
+canary:
+  enabled: false
+  image:
+    tag: v2
+  replicas: 1
+  trafficPercent: 10
+
+# stable gets the remaining traffic
+stableTrafficPercent: 90
+
+# pipeline (pre/post processing)
+pipeline:
+  enabled: false
+  transformer:
+    image:
+      repository: registry.example.com/model-serving/transformer
+      tag: latest
+    resources:
+      requests:
+        cpu: "250m"
+        memory: "512Mi"
+
+# monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    scrape: true
+    port: 6000
+
+# autoscaling
+autoscaling:
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPU: 70

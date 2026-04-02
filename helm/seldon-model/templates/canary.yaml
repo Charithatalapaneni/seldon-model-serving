@@ -1,0 +1,35 @@
+{{- if .Values.canary.enabled }}
+# canary predictor — added to the same SeldonDeployment as a second predictor
+# with a traffic percentage. Seldon handles the split at the ingress level.
+
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: {{ .Values.namespace }}
+  annotations:
+    seldon.io/canary: "true"
+spec:
+  predictors:
+    # stable (from deployment.yaml is the primary — this file adds the canary via helm)
+    - name: canary
+      replicas: {{ .Values.canary.replicas }}
+      traffic: {{ .Values.canary.trafficPercent }}
+      graph:
+        name: classifier
+        type: MODEL
+        children: []
+      componentSpecs:
+        - spec:
+            containers:
+              - name: classifier
+                image: "{{ .Values.image.repository }}:{{ .Values.canary.image.tag }}"
+                imagePullPolicy: {{ .Values.image.pullPolicy }}
+                resources:
+                  {{- toYaml .Values.resources | nindent 18 }}
+                env:
+                  - name: MODEL_TYPE
+                    value: {{ .Values.model.type | quote }}
+                  - name: MODEL_VERSION
+                    value: "canary"
+{{- end }}

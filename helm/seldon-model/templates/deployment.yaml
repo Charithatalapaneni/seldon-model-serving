@@ -1,0 +1,56 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: {{ .Values.model.name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    app: {{ .Values.model.name }}
+    version: {{ .Values.model.version }}
+    chart: {{ .Chart.Name }}-{{ .Chart.Version }}
+spec:
+  predictors:
+    - name: stable
+      replicas: {{ .Values.replicas }}
+      {{- if .Values.canary.enabled }}
+      traffic: {{ .Values.stableTrafficPercent }}
+      {{- end }}
+      graph:
+        {{- if .Values.pipeline.enabled }}
+        name: transformer
+        type: TRANSFORMER
+        children:
+          - name: classifier
+            type: MODEL
+            children: []
+        {{- else }}
+        name: classifier
+        type: MODEL
+        children: []
+        {{- end }}
+      componentSpecs:
+        {{- if .Values.pipeline.enabled }}
+        - spec:
+            containers:
+              - name: transformer
+                image: "{{ .Values.pipeline.transformer.image.repository }}:{{ .Values.pipeline.transformer.image.tag }}"
+                resources:
+                  {{- toYaml .Values.pipeline.transformer.resources | nindent 18 }}
+        {{- end }}
+        - spec:
+            containers:
+              - name: classifier
+                image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+                imagePullPolicy: {{ .Values.image.pullPolicy }}
+                resources:
+                  {{- toYaml .Values.resources | nindent 18 }}
+                env:
+                  - name: MODEL_TYPE
+                    value: {{ .Values.model.type | quote }}
+                  - name: MODEL_VERSION
+                    value: {{ .Values.model.version | quote }}
+                {{- if .Values.monitoring.enabled }}
+                ports:
+                  - containerPort: {{ .Values.monitoring.prometheus.port }}
+                    name: metrics
+                    protocol: TCP
+                {{- end }}

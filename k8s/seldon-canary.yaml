@@ -1,0 +1,64 @@
+# canary deployment — splits traffic between stable and canary model versions.
+# adjust traffic in the predictor weights to gradually roll out.
+
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: image-classifier-canary
+  namespace: ml-serving
+  annotations:
+    seldon.io/canary: "true"
+    seldon.io/rollback-version: "v1"
+spec:
+  predictors:
+    # stable: gets 90% of traffic
+    - name: stable
+      replicas: 3
+      traffic: 90
+      graph:
+        name: classifier
+        type: MODEL
+        children: []
+      componentSpecs:
+        - spec:
+            containers:
+              - name: classifier
+                image: registry.example.com/model-serving/predictor:v1
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "2Gi"
+                  limits:
+                    cpu: "2"
+                    memory: "4Gi"
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+                  - name: MODEL_VERSION
+                    value: "v1"
+
+    # canary: gets 10% of traffic
+    - name: canary
+      replicas: 1
+      traffic: 10
+      graph:
+        name: classifier
+        type: MODEL
+        children: []
+      componentSpecs:
+        - spec:
+            containers:
+              - name: classifier
+                image: registry.example.com/model-serving/predictor:v2
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "2Gi"
+                  limits:
+                    cpu: "2"
+                    memory: "4Gi"
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+                  - name: MODEL_VERSION
+                    value: "v2"

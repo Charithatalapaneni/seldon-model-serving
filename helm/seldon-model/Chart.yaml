@@ -1,0 +1,6 @@
+apiVersion: v2
+name: seldon-model
+description: Helm chart for deploying PyTorch models with Seldon Core
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

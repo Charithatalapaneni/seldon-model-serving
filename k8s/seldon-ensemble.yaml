@@ -1,0 +1,61 @@
+apiVersion: machinelearning.seldon.io/v1
+kind: SeldonDeployment
+metadata:
+  name: model-ensemble
+  namespace: ml-serving
+spec:
+  predictors:
+    - name: default
+      replicas: 2
+      graph:
+        name: router
+        type: ROUTER
+        parameters:
+          - name: n_models
+            type: INT
+            value: "2"
+          - name: strategy
+            type: STRING
+            value: "average"
+        children:
+          - name: model-v1
+            type: MODEL
+            children: []
+          - name: model-v2
+            type: MODEL
+            children: []
+      componentSpecs:
+        - spec:
+            containers:
+              - name: router
+                image: registry.example.com/model-serving/router:latest
+                resources:
+                  requests:
+                    cpu: "250m"
+                    memory: "256Mi"
+        - spec:
+            containers:
+              - name: model-v1
+                image: registry.example.com/model-serving/predictor:v1
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "2Gi"
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+                  - name: MODEL_VERSION
+                    value: "v1"
+        - spec:
+            containers:
+              - name: model-v2
+                image: registry.example.com/model-serving/predictor:v2
+                resources:
+                  requests:
+                    cpu: "1"
+                    memory: "2Gi"
+                env:
+                  - name: MODEL_TYPE
+                    value: "image"
+                  - name: MODEL_VERSION
+                    value: "v2"

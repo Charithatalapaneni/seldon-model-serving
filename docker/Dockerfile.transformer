@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY serving/transformer.py serving/transformer.py
+COPY serving/__init__.py serving/__init__.py
+
+RUN useradd -m appuser
+USER appuser
+
+# Seldon will call the transformer module directly
+ENV MODEL_NAME=ImageTransformer
+ENV SERVICE_TYPE=TRANSFORMER
+
+CMD ["python", "-c", "from serving.transformer import ImageTransformer; print('Transformer ready')"]
