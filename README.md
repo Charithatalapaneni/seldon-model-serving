@@ -2,7 +2,7 @@
 
 Serves PyTorch classification models (image + text) using Seldon Core on Kubernetes. Includes pre/post-processing pipelines, ensemble routing, canary deployments via Helm, and Prometheus monitoring.
 
-## What's in here
+## Components:
 
 - **models/** — PyTorch wrappers (ResNet18 image classifier, LSTM sentiment classifier), model save/load with versioning, sample training script
 - **serving/** — Seldon-compatible components: predictor (`predict()`), transformer (`transform_input`/`transform_output`), ensemble router (traffic split, round robin, voting)
@@ -21,7 +21,7 @@ pip install -r requirements.txt
 python -m uvicorn gateway.app:app --reload --port 8000
 ```
 
-Test it:
+To Test:
 ```bash
 # health
 curl localhost:8000/health
